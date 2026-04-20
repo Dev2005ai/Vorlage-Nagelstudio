@@ -1,3 +1,8 @@
+# Claude Code / Skills (local tool config)
+.claude/
+.agents/
+skills-lock.json
+
 /node_modules
 /.next/
 /out/
