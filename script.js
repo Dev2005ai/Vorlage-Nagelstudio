@@ -1,98 +1,90 @@
-/* ============================================
-   NAILROOM HAMBURG – script.js
-   ============================================ */
+/* =============================================
+   NAILROOM — script.js
+   ============================================= */
 
-/* ── Sticky header ─────────────────────────── */
+/* ── Header scroll ───────────────────────────── */
 const header = document.getElementById('header');
 
-function updateHeader() {
-  if (window.scrollY > 20) {
-    header.classList.add('scrolled');
-  } else {
-    header.classList.remove('scrolled');
-  }
-}
+window.addEventListener('scroll', () => {
+  header.classList.toggle('scrolled', window.scrollY > 40);
+}, { passive: true });
 
-window.addEventListener('scroll', updateHeader, { passive: true });
-updateHeader();
-
-/* ── Burger / Mobile menu ──────────────────── */
-const burger = document.querySelector('.burger');
+/* ── Burger menu ─────────────────────────────── */
+const burger     = document.querySelector('.burger');
 const mobileMenu = document.querySelector('.mobile-menu');
 
 burger.addEventListener('click', () => {
-  const isOpen = mobileMenu.classList.toggle('open');
-  burger.classList.toggle('open', isOpen);
-  burger.setAttribute('aria-expanded', String(isOpen));
-  mobileMenu.setAttribute('aria-hidden', String(!isOpen));
+  const open = mobileMenu.classList.toggle('open');
+  burger.classList.toggle('open', open);
+  burger.setAttribute('aria-expanded', String(open));
+  document.body.style.overflow = open ? 'hidden' : '';
 });
 
-// Close on nav link click
-mobileMenu.querySelectorAll('a').forEach(link => {
-  link.addEventListener('click', () => {
+mobileMenu.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
     mobileMenu.classList.remove('open');
     burger.classList.remove('open');
     burger.setAttribute('aria-expanded', 'false');
-    mobileMenu.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
   });
 });
 
-/* ── Scroll reveal ─────────────────────────── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && mobileMenu.classList.contains('open')) {
+    mobileMenu.classList.remove('open');
+    burger.classList.remove('open');
+    burger.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+});
+
+/* ── Scroll reveal ───────────────────────────── */
 const revealEls = document.querySelectorAll('[data-reveal]');
 
-const revealObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
+const observer = new IntersectionObserver(entries => {
+  entries.forEach((entry, i) => {
     if (entry.isIntersecting) {
-      entry.target.classList.add('revealed');
-      revealObserver.unobserve(entry.target);
+      const delay = entry.target.dataset.delay || 0;
+      setTimeout(() => entry.target.classList.add('revealed'), Number(delay));
+      observer.unobserve(entry.target);
     }
   });
-}, {
-  threshold: 0.1,
-  rootMargin: '0px 0px -60px 0px'
-});
+}, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
 
-revealEls.forEach(el => revealObserver.observe(el));
+revealEls.forEach(el => observer.observe(el));
 
-/* ── Gallery filter ────────────────────────── */
-const filterBtns = document.querySelectorAll('.filter-btn');
-const masonryItems = document.querySelectorAll('.masonry-item');
+/* ── Gallery filter ──────────────────────────── */
+const filters     = document.querySelectorAll('.filter');
+const galleryItems = document.querySelectorAll('.g-item');
 
-filterBtns.forEach(btn => {
+filters.forEach(btn => {
   btn.addEventListener('click', () => {
-    filterBtns.forEach(b => b.classList.remove('active'));
+    filters.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
 
-    const filter = btn.dataset.filter;
+    const cat = btn.dataset.filter;
 
-    masonryItems.forEach(item => {
-      const match = filter === 'all' || item.dataset.category === filter;
-      item.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
-      if (match) {
-        item.style.opacity = '1';
-        item.style.transform = 'scale(1)';
-        item.style.display = '';
-      } else {
-        item.style.opacity = '0';
-        item.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-          if (item.dataset.category !== filter && filter !== 'all') {
-            item.style.display = 'none';
-          }
-        }, 350);
-      }
+    galleryItems.forEach(item => {
+      const match = cat === 'all' || item.dataset.cat === cat;
+      item.style.transition = 'opacity 0.3s, transform 0.3s';
+      item.style.opacity    = match ? '1' : '0.15';
+      item.style.transform  = match ? 'scale(1)' : 'scale(0.97)';
+      item.style.pointerEvents = match ? '' : 'none';
     });
   });
 });
 
-/* ── Smooth scroll for in-page anchors ─────── */
+/* ── Smooth scroll ───────────────────────────── */
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-  anchor.addEventListener('click', (e) => {
-    const target = document.querySelector(anchor.getAttribute('href'));
+  anchor.addEventListener('click', e => {
+    const id = anchor.getAttribute('href');
+    if (id === '#') return;
+    const target = document.querySelector(id);
     if (!target) return;
     e.preventDefault();
-    const offset = header.offsetHeight + 16;
-    const top = target.getBoundingClientRect().top + window.scrollY - offset;
-    window.scrollTo({ top, behavior: 'smooth' });
+    window.scrollTo({
+      top: target.getBoundingClientRect().top + window.scrollY - header.offsetHeight - 16,
+      behavior: 'smooth'
+    });
   });
 });
